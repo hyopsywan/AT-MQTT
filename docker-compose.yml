@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0.20
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/config/auth:/mosquitto/config/auth
+      - ./mosquitto/config/certs:/mosquitto/config/certs
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - mqtt_network
+
+  temperature-sensor-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.temperature-sensor-1
+    container_name: temperature-sensor-1
+    depends_on:
+      - mqtt-broker
+    environment:
+      BROKER_HOST: mqtt-broker
+      BROKER_PORT: "1883"
+      TOPIC: sensor/temperature
+      INTERVAL_SECONDS: "5"
+      QOS: "0"
+      RETAIN: "false"
+      MQTT_USERNAME: sensor_user
+      MQTT_PASSWORD: sensor123
+    restart: unless-stopped
+    networks:
+      - mqtt_network
+
+  mqtt-subscriber:
+    image: eclipse-mosquitto:2.0.20
+    container_name: mqtt-subscriber
+    depends_on:
+      - mqtt-broker
+    command: >
+      sh -c "mosquitto_sub -h mqtt-broker -t sensor/# -u subscriber_user -P subscriber123 -v"
+    networks:
+      - mqtt_network
+    restart: unless-stopped
+
+networks:
+  mqtt_network:
+    name: mqtt_network
+    driver: bridge
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
