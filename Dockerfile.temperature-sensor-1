@@ -1,0 +1,13 @@
+FROM python:3.12-alpine
+
+RUN addgroup -S app && adduser -S app -G app
+RUN pip install --no-cache-dir paho-mqtt
+
+WORKDIR /app
+COPY src/temperature-sensor-1.py /app/temperature-sensor-1.py
+
+USER app
+
+ENV BROKER_HOST=mqtt-broker     BROKER_PORT=1883     TOPIC=sensor/temperature     INTERVAL_SECONDS=5     QOS=0     RETAIN=false
+
+CMD ["python", "-u", "/app/temperature-sensor-1.py"]
