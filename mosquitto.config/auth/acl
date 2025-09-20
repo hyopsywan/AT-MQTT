@@ -1,0 +1,17 @@
+# Lista de Controle de Acesso MQTT
+# Formato: user <username>
+# Topic [read|write] <topic_pattern>
+
+# Sensor_user: só envia para tópicos de sensor
+user sensor_user
+topic write sensor/+
+
+# Subscriber_user: apenas lê tópicos de sensor
+user subscriber_user
+topic read sensor/+
+
+# Admin_user: acesso total
+user admin_user
+topic readwrite #
+
+# Acesso anônimo: negado
